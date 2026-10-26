@@ -1,0 +1,29 @@
+{
+  "functions": {
+    "source": "functions"
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "scentify-b97e5",
+          "configurations": {
+            "web": "1:855012759439:web:c2fcddcf55356b2467ddfa"
+          }
+        }
+      }
+    }
+  },
+  "auth": {
+    "providers": {
+      "emailPassword": true,
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Scentify",
+        "supportEmail": "iangabtong@gmail.com"
+      }
+    }
+  }
+}

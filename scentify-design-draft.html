@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Scentify luxury mobile app design draft"
+    />
+    <title>Scentify — Luxury design draft</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --paper: #f5f0e8;
+        --surface: #eee7dc;
+        --surface-strong: #e6ddcf;
+        --ink: #191714;
+        --muted: #827c72;
+        --line: #d8cfc1;
+        --gold: #9d7c4b;
+        --gold-soft: #cdb58c;
+        --dark: #1a1916;
+        --dark-muted: #aaa397;
+        --white: #fffdf8;
+        --shadow: 0 26px 70px rgba(33, 27, 19, 0.16);
+        --display: "Cormorant Garamond", Georgia, serif;
+        --sans: "Manrope", system-ui, sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html { min-height: 100%; background: #d9d3c9; }
+      body {
+        min-height: 100vh;
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 0%, rgba(255,255,255,.65), transparent 32rem),
+          #d9d3c9;
+        font: 400 13px/1.5 var(--sans);
+      }
+      button { font: inherit; color: inherit; }
+      button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+      .draft {
+        width: min(1180px, 100%);
+        min-height: 100vh;
+        margin: 0 auto;
+        padding: 42px 32px;
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) 390px minmax(220px, 1fr);
+        gap: 54px;
+        align-items: center;
+      }
+      .intro { align-self: start; padding-top: 18px; }
+      .wordmark {
+        margin: 0;
+        font: 600 clamp(3rem, 6vw, 5.8rem)/.8 var(--display);
+        letter-spacing: -.055em;
+      }
+      .intro-rule { width: 52px; height: 1px; margin: 26px 0 18px; background: var(--gold); }
+      .eyebrow {
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: .16em;
+        line-height: 1.3;
+        text-transform: uppercase;
+      }
+      .intro h2 {
+        max-width: 16rem;
+        margin: 12px 0 16px;
+        font: 500 2rem/1 var(--display);
+        letter-spacing: -.02em;
+      }
+      .intro p { max-width: 19rem; margin: 0; color: var(--muted); }
+      .notes { align-self: end; padding-bottom: 10px; }
+      .notes h3 { margin: 0 0 16px; font: 500 1.65rem/1 var(--display); }
+      .note-line { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+      .note-line strong { min-width: 70px; font-size: 11px; font-weight: 600; }
+      .note-line span { color: var(--muted); font-size: 11px; }
+      .palette { display: flex; gap: 6px; margin-top: 20px; }
+      .swatch { width: 24px; height: 24px; border: 1px solid rgba(0,0,0,.08); border-radius: 50%; }
+      .swatch.paper { background: var(--paper); }
+      .swatch.ink { background: var(--ink); }
+      .swatch.gold { background: var(--gold); }
+      .swatch.olive { background: #9fa38c; }
+      .swatch.tobacco { background: #8d624b; }
+
+      .phone {
+        position: relative;
+        width: 390px;
+        height: min(820px, calc(100vh - 84px));
+        min-height: 680px;
+        overflow: hidden;
+        background: var(--paper);
+        border: 1px solid rgba(25, 23, 20, .18);
+        border-radius: 32px;
+        box-shadow: var(--shadow), 0 0 0 7px rgba(255,255,255,.25);
+      }
+      .phone::before {
+        content: "";
+        position: absolute;
+        z-index: 8;
+        top: 9px;
+        left: 50%;
+        width: 86px;
+        height: 5px;
+        transform: translateX(-50%);
+        border-radius: 8px;
+        background: rgba(25,23,20,.7);
+      }
+      .screen { display: none; height: 100%; overflow: auto; padding-bottom: 76px; scrollbar-width: none; }
+      .screen::-webkit-scrollbar { display: none; }
+      .screen.active { display: block; }
+      .screen-head { display: flex; align-items: center; justify-content: space-between; padding: 30px 22px 10px; }
+      .screen-head h1 { margin: 0; font: 600 1.75rem/1 var(--display); letter-spacing: -.02em; }
+      .screen-head h1.small { font: 600 1.35rem/1 var(--display); }
+      .brand-lockup { display: flex; flex-direction: column; gap: 5px; }
+      .brand-lockup .brand { font: 600 1.32rem/.8 var(--display); letter-spacing: .1em; }
+      .icon-button {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        place-items: center;
+        border: 0;
+        border-radius: 50%;
+        background: transparent;
+        cursor: pointer;
+      }
+      .icon-button:hover { background: var(--surface); }
+      .screen-head .icon-button { position: relative; }
+      .bag-badge { position: absolute; top: 2px; right: 1px; display: grid; width: 15px; height: 15px; place-items: center; border-radius: 50%; background: var(--gold); color: var(--white); font-size: 8px; }
+      .icon { width: 19px; height: 19px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.45; }
+      .search {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        height: 42px;
+        margin: 3px 22px 18px;
+        padding: 0 14px;
+        color: var(--muted);
+        background: var(--surface);
+        border: 1px solid transparent;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+      .search:focus-within { border-color: var(--gold); }
+      .hero {
+        position: relative;
+        min-height: 270px;
+        margin: 0 22px;
+        overflow: hidden;
+        color: var(--white);
+        background: var(--dark);
+        border-radius: 4px;
+      }
+      .hero::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, rgba(26,25,22,.94) 0%, rgba(26,25,22,.32) 65%, transparent 100%);
+        pointer-events: none;
+      }
+      .hero-copy { position: relative; z-index: 1; width: 62%; padding: 34px 0 30px 24px; }
+      .hero .eyebrow { color: var(--gold-soft); }
+      .hero h2 { margin: 12px 0 16px; font: 500 2.35rem/.88 var(--display); letter-spacing: -.03em; }
+      .hero p { max-width: 150px; margin: 0 0 21px; color: #d2c9ba; font-size: 11px; }
+      .hero-bottle { position: absolute; z-index: 1; right: 18px; bottom: 19px; width: 42%; transform: rotate(5deg); filter: drop-shadow(0 20px 20px rgba(0,0,0,.45)); }
+      .hero-bottle svg { width: 100%; height: auto; }
+      .text-button {
+        padding: 0 0 4px;
+        border: 0;
+        border-bottom: 1px solid currentColor;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+      }
+      .text-button.gold { color: var(--gold-soft); }
+      .section { padding: 0 22px; }
+      .section-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin: 26px 0 12px; }
+      .section-head h2 { margin: 0; font: 500 1.7rem/1 var(--display); letter-spacing: -.02em; }
+      .section-head .eyebrow { margin-bottom: 3px; }
+      .category-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+      .category { padding: 0; border: 0; background: transparent; cursor: pointer; text-align: center; }
+      .category-mark { display: grid; width: 100%; aspect-ratio: 1; margin-bottom: 7px; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--gold); font: 500 1.55rem/1 var(--display); }
+      .category:hover .category-mark { border-color: var(--gold); background: var(--surface); }
+      .category span { font-size: 10px; }
+      .feature {
+        display: grid;
+        grid-template-columns: 1fr 75px;
+        gap: 14px;
+        align-items: center;
+        padding: 16px;
+        background: var(--surface-strong);
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .feature h3 { margin: 5px 0 5px; font: 500 1.65rem/1 var(--display); }
+      .feature p { margin: 0 0 13px; color: var(--muted); font-size: 10px; }
+      .feature-bottle { width: 66px; margin: auto; }
+      .product-row { display: flex; gap: 12px; overflow-x: auto; margin: 0 -22px; padding: 0 22px 2px; scrollbar-width: none; }
+      .product-row::-webkit-scrollbar { display: none; }
+      .product-card { flex: 0 0 126px; border: 0; background: transparent; cursor: pointer; text-align: left; }
+      .product-image { position: relative; display: grid; height: 151px; place-items: center; overflow: hidden; background: var(--surface); border: 1px solid var(--line); }
+      .product-image svg { width: 58%; height: auto; transition: transform .3s ease; }
+      .product-card:hover .product-image svg { transform: translateY(-4px); }
+      .product-name { display: block; margin-top: 9px; font: 500 1.14rem/1 var(--display); }
+      .product-brand { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+      .product-price { display: block; margin-top: 6px; color: var(--gold); font-size: 11px; font-weight: 600; }
+      .mini-heart { position: absolute; top: 7px; right: 7px; display: grid; width: 25px; height: 25px; padding: 0; place-items: center; border: 0; border-radius: 50%; background: rgba(245,240,232,.78); cursor: pointer; }
+      .mini-heart .icon { width: 14px; height: 14px; }
+      .mini-heart.active { color: var(--gold); }
+
+      .filter-strip { display: flex; gap: 7px; margin: 3px 22px 14px; overflow-x: auto; scrollbar-width: none; }
+      .filter-strip::-webkit-scrollbar { display: none; }
+      .filter { flex: 0 0 auto; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; font-size: 10px; }
+      .filter.active { color: var(--paper); background: var(--ink); border-color: var(--ink); }
+      .catalog-meta { display: flex; justify-content: space-between; margin: 0 22px 12px; color: var(--muted); font-size: 10px; }
+      .catalog-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 25px 12px; padding: 0 22px; }
+      .catalog-grid .product-card { min-width: 0; }
+      .catalog-grid .product-image { height: 178px; }
+
+      .back-row { display: flex; align-items: center; gap: 6px; padding: 28px 18px 8px; }
+      .back-row h1 { margin: 0; font: 600 1.6rem/1 var(--display); }
+      .back-row .spacer { flex: 1; }
+      .product-hero { display: grid; min-height: 265px; margin: 0 22px; place-items: center; background: var(--surface-strong); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .product-hero svg { width: 44%; filter: drop-shadow(0 22px 20px rgba(45,34,22,.22)); }
+      .product-copy { padding: 20px 22px 0; }
+      .product-copy h2 { margin: 5px 0 4px; font: 500 2.6rem/.88 var(--display); letter-spacing: -.04em; }
+      .product-sub { display: flex; align-items: center; justify-content: space-between; color: var(--muted); font-size: 10px; }
+      .detail-block { margin: 22px 22px 0; }
+      .detail-block h3 { margin: 0 0 9px; font: 500 1.55rem/1 var(--display); }
+      .size-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+      .size { padding: 10px 5px; border: 1px solid var(--line); border-radius: 3px; background: transparent; cursor: pointer; text-align: center; }
+      .size strong { display: block; font-size: 10px; font-weight: 600; }
+      .size small { color: var(--muted); font-size: 9px; }
+      .size.active { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+      .size.active small { color: var(--gold-soft); }
+      .notes-table { border-top: 1px solid var(--line); }
+      .note-row { display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 10px; }
+      .note-row span:first-child { color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+      .accordion { display: flex; justify-content: space-between; width: 100%; padding: 15px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; cursor: pointer; text-align: left; font-size: 11px; }
+      .purchase-bar { position: absolute; right: 0; bottom: 0; left: 0; display: flex; gap: 9px; align-items: center; padding: 12px 22px 17px; background: rgba(245,240,232,.96); border-top: 1px solid var(--line); backdrop-filter: blur(12px); }
+      .quantity { display: flex; align-items: center; height: 45px; border: 1px solid var(--line); border-radius: 3px; }
+      .quantity button { width: 31px; height: 100%; border: 0; background: transparent; cursor: pointer; }
+      .quantity span { min-width: 22px; text-align: center; font-size: 11px; }
+      .primary { min-height: 45px; padding: 0 17px; border: 1px solid var(--ink); border-radius: 3px; background: var(--ink); color: var(--paper); cursor: pointer; font-size: 10px; font-weight: 600; letter-spacing: .11em; text-transform: uppercase; }
+      .primary:hover { background: var(--gold); border-color: var(--gold); }
+
+      .profile { padding: 0 22px; }
+      .account-card { display: flex; align-items: center; gap: 13px; padding: 16px; background: var(--surface); border: 1px solid var(--line); }
+      .avatar { display: grid; width: 58px; height: 58px; place-items: center; flex: 0 0 auto; border: 1px solid var(--gold); border-radius: 50%; background: var(--gold-soft); color: var(--dark); font: 500 1.55rem/1 var(--display); }
+      .account-card h2 { margin: 5px 0 3px; font: 500 1.55rem/1 var(--display); }
+      .account-card p { margin: 0; color: var(--muted); font-size: 10px; }
+      .stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 12px; padding: 14px 0; background: var(--surface); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .stat { padding: 0 8px; border-right: 1px solid var(--line); text-align: center; }
+      .stat:last-child { border-right: 0; }
+      .stat strong { display: block; font: 600 1.45rem/1 var(--display); }
+      .stat span { display: block; margin-top: 5px; color: var(--muted); font-size: 9px; }
+      .order-card { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px; background: var(--dark); color: var(--white); border-radius: 3px; }
+      .order-card .eyebrow { color: var(--gold-soft); }
+      .order-card h3 { margin: 6px 0 4px; font: 500 1.25rem/1 var(--display); }
+      .order-card p { margin: 0; color: var(--dark-muted); font-size: 9px; }
+      .status-dot { display: flex; align-items: center; gap: 6px; color: var(--gold-soft); font-size: 9px; }
+      .status-dot::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--gold-soft); }
+      .menu-group { overflow: hidden; border: 1px solid var(--line); background: transparent; }
+      .menu-row { display: flex; width: 100%; align-items: center; gap: 10px; min-height: 47px; padding: 0 13px; border: 0; border-bottom: 1px solid var(--line); background: var(--paper); cursor: pointer; text-align: left; }
+      .menu-row:last-child { border-bottom: 0; }
+      .menu-row:hover { background: var(--surface); }
+      .menu-row .icon { width: 17px; height: 17px; color: var(--muted); }
+      .menu-row > span:first-child { flex: 0 0 auto; }
+      .menu-row > span:nth-child(2) { flex: 1; font-size: 11px; }
+      .menu-row .arrow { color: var(--muted); font-size: 17px; }
+      .logout { width: 100%; margin-top: 12px; padding: 12px 13px; border: 1px solid var(--line); background: var(--surface); cursor: pointer; text-align: left; font-size: 11px; }
+
+      .bottom-nav { position: absolute; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, 1fr); padding: 10px 9px 15px; background: rgba(245,240,232,.96); border-top: 1px solid var(--line); backdrop-filter: blur(12px); }
+      .bottom-nav button { display: grid; gap: 4px; justify-items: center; padding: 0; border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 9px; }
+      .bottom-nav button.active { color: var(--ink); }
+      .bottom-nav button.active::before { content: ""; position: absolute; top: -11px; width: 22px; height: 2px; background: var(--gold); }
+      .bottom-nav button { position: relative; }
+      .bottom-nav .icon { width: 18px; height: 18px; }
+
+      @media (max-width: 980px) {
+        .draft { grid-template-columns: 1fr 390px; gap: 36px; }
+        .notes { display: none; }
+      }
+      @media (max-width: 680px) {
+        body { background: var(--paper); }
+        .draft { display: block; padding: 0; }
+        .intro, .notes { display: none; }
+        .phone { width: 100%; height: 100svh; min-height: 0; border: 0; border-radius: 0; box-shadow: none; }
+        .phone::before { display: none; }
+      }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+    </style>
+  </head>
+  <body>
+    <main class="draft">
+      <aside class="intro" aria-label="Design draft introduction">
+        <div class="eyebrow">Scentify / design draft 01</div>
+        <h1 class="wordmark">SCENTIFY</h1>
+        <div class="intro-rule"></div>
+        <h2>A quieter kind of luxury.</h2>
+        <p>
+          A restrained mobile direction for discovering, comparing, and buying
+          fragrance. Editorial typography, honest product information, and just
+          enough contrast to guide the next decision.
+        </p>
+      </aside>
+
+      <section class="phone" aria-label="Scentify mobile design preview">
+        <section class="screen active" id="screen-home" data-screen="home">
+          <header class="screen-head">
+            <div class="brand-lockup">
+              <span class="eyebrow">Curated fragrance house</span>
+              <span class="brand">SCENTIFY</span>
+            </div>
+            <button class="icon-button" aria-label="Open bag" data-nav="cart">
+              <span class="bag-badge">2</span>
+              <span data-icon="bag"></span>
+            </button>
+          </header>
+          <div class="search" role="search">
+            <span data-icon="search"></span>
+            <span>Search perfumes, brands, or notes</span>
+          </div>
+          <section class="hero" aria-label="Featured fragrance">
+            <div class="hero-copy">
+              <div class="eyebrow">The evening edit / 01</div>
+              <h2>Made for the<br /><em>last impression.</em></h2>
+              <p>A considered collection of woods, amber, and skin-close musk.</p>
+              <button class="text-button gold" data-nav="catalog">Explore the edit</button>
+            </div>
+            <div class="hero-bottle" data-bottle="#b99a69" data-label="NOIR"></div>
+          </section>
+          <section class="section">
+            <div class="section-head">
+              <div><div class="eyebrow">Begin with a mood</div><h2>Find your way in.</h2></div>
+            </div>
+            <div class="category-row">
+              <button class="category" data-nav="catalog"><span class="category-mark">W</span><span>Women</span></button>
+              <button class="category" data-nav="catalog"><span class="category-mark">M</span><span>Men</span></button>
+              <button class="category" data-nav="catalog"><span class="category-mark">U</span><span>Unisex</span></button>
+              <button class="category" data-nav="catalog"><span class="category-mark">10</span><span>Top ten</span></button>
+            </div>
+          </section>
+          <section class="section">
+            <div class="section-head">
+              <div><div class="eyebrow">Most returned to</div><h2>Best sellers.</h2></div>
+              <button class="text-button" data-nav="catalog">See all</button>
+            </div>
+            <div class="product-row" data-products="featured"></div>
+          </section>
+          <nav class="bottom-nav" aria-label="Primary navigation"></nav>
+        </section>
+
+        <section class="screen" id="screen-catalog" data-screen="catalog">
+          <div class="back-row">
+            <button class="icon-button" aria-label="Back to home" data-nav="home"><span data-icon="back"></span></button>
+            <h1>The collection</h1>
+            <span class="spacer"></span>
+            <button class="icon-button" aria-label="Filter collection"><span data-icon="sliders"></span></button>
+          </div>
+          <div class="search" role="search"><span data-icon="search"></span><span>Search the collection</span></div>
+          <div class="filter-strip">
+            <button class="filter active">All</button><button class="filter">Women</button><button class="filter">Men</button><button class="filter">Unisex</button>
+          </div>
+          <div class="catalog-meta"><span>24 fragrances</span><span>Sort: Featured⌄</span></div>
+          <div class="catalog-grid" data-products="catalog"></div>
+          <nav class="bottom-nav" aria-label="Primary navigation"></nav>
+        </section>
+
+        <section class="screen" id="screen-product" data-screen="product">
+          <div class="back-row">
+            <button class="icon-button" aria-label="Back to collection" data-nav="catalog"><span data-icon="back"></span></button>
+            <span class="spacer"></span>
+            <button class="icon-button" aria-label="Save product" data-fav="product"><span data-icon="heart"></span></button>
+            <button class="icon-button" aria-label="Share product"><span data-icon="share"></span></button>
+          </div>
+          <div class="product-hero"><div data-product-bottle></div></div>
+          <div class="product-copy">
+            <div class="eyebrow" data-product-brand></div>
+            <h2 data-product-name></h2>
+            <div class="product-sub"><span>Eau de parfum</span><span>★ 4.8 · 130 reviews</span></div>
+          </div>
+          <div class="detail-block">
+            <h3>Choose a size</h3>
+            <div class="size-row"><button class="size" data-size="30"><strong>30 ml</strong><small data-price="30"></small></button><button class="size active" data-size="50"><strong>50 ml</strong><small data-price="50"></small></button><button class="size" data-size="100"><strong>100 ml</strong><small data-price="100"></small></button></div>
+          </div>
+          <div class="detail-block">
+            <h3>Fragrance notes</h3>
+            <div class="notes-table"><div class="note-row"><span>Top</span><span data-note="top"></span></div><div class="note-row"><span>Heart</span><span data-note="heart"></span></div><div class="note-row"><span>Base</span><span data-note="base"></span></div></div>
+            <button class="accordion">Description <span data-icon="chev"></span></button>
+            <button class="accordion">Shipping &amp; authenticity <span data-icon="chev"></span></button>
+          </div>
+          <div class="purchase-bar"><div class="quantity"><button data-qty="-1" aria-label="Decrease quantity">−</button><span data-qty-value>1</span><button data-qty="1" aria-label="Increase quantity">+</button></div><button class="primary" data-add>Add to bag · <span data-product-price></span></button></div>
+        </section>
+
+        <section class="screen" id="screen-cart" data-screen="cart">
+          <div class="back-row"><button class="icon-button" aria-label="Back to home" data-nav="home"><span data-icon="back"></span></button><h1>Your bag <small>(2)</small></h1><span class="spacer"></span><button class="text-button">Edit</button></div>
+          <div class="section" style="padding-top:7px"><div class="eyebrow">Ready when you are</div><h2 style="margin:7px 0 0;font:500 2rem/1 var(--display)">Two scents, one mood.</h2></div>
+          <div class="section" style="margin-top:20px"><div class="eyebrow" style="margin-bottom:9px">Selected items</div><div class="menu-group" data-cart-items></div></div>
+          <div class="section" style="margin-top:20px"><div class="order-card"><div><div class="eyebrow">Subtotal</div><h3 data-cart-total>₱23,300</h3><p>Shipping calculated at checkout</p></div><button class="primary" data-nav="checkout">Checkout</button></div></div>
+          <nav class="bottom-nav" aria-label="Primary navigation"></nav>
+        </section>
+
+        <section class="screen" id="screen-checkout" data-screen="checkout">
+          <div class="back-row"><button class="icon-button" aria-label="Back to bag" data-nav="cart"><span data-icon="back"></span></button><h1>Checkout</h1><span class="spacer"></span></div>
+          <div class="section" style="padding-top:6px"><div style="display:flex;align-items:center;gap:8px;color:var(--muted);font-size:9px"><strong style="color:var(--ink)">01 Address</strong><span style="height:1px;flex:1;background:var(--line)"></span><span>02 Delivery</span><span style="height:1px;flex:1;background:var(--line)"></span><span>03 Pay</span></div></div>
+          <div class="section" style="margin-top:24px"><div class="eyebrow">Deliver to</div><h2 style="margin:7px 0 13px;font:500 1.85rem/1 var(--display)">Shipping address.</h2><div class="menu-group"><div class="menu-row" style="cursor:default"><span data-icon="pin"></span><span><strong style="display:block;font-size:11px">Christine Q.</strong><small style="display:block;margin-top:4px;color:var(--muted);font-size:9px">Makati City, Metro Manila<br />+63 917 123 4567</small></span><b class="arrow">›</b></div></div></div>
+          <div class="section" style="margin-top:24px"><div class="eyebrow">Order summary</div><h2 style="margin:7px 0 13px;font:500 1.85rem/1 var(--display)">Two scents.</h2><div class="order-card"><div><div class="eyebrow">Total</div><h3>₱23,300</h3><p>Standard delivery · ₱80</p></div><button class="primary" data-nav="profile">Place order</button></div></div>
+        </section>
+
+        <section class="screen" id="screen-profile" data-screen="profile">
+          <div class="back-row"><button class="icon-button" aria-label="Back to home" data-nav="home"><span data-icon="back"></span></button><h1>My account</h1><span class="spacer"></span><button class="icon-button" aria-label="Account settings"><span data-icon="more"></span></button></div>
+          <div class="profile">
+            <div class="account-card"><div class="avatar">CQ</div><div><div class="eyebrow">Your account</div><h2>Christine Q.</h2><p>christine@example.com</p></div></div>
+            <div class="stats"><button class="stat" data-nav="cart"><strong>3</strong><span>Orders</span></button><button class="stat" data-nav="profile"><strong>4</strong><span>Saved scents</span></button><button class="stat" data-nav="profile"><strong>2026</strong><span>Member since</span></button></div>
+            <div class="section-head"><div><div class="eyebrow">Keep an eye on it</div><h2>Latest order.</h2></div><button class="text-button">View all</button></div>
+            <button class="order-card" style="width:100%;border:0;text-align:left;cursor:pointer"><div><div class="eyebrow">Order #SCN2025001234</div><h3>Processing</h3><p>Estimated delivery · Oct 10–15</p></div><span class="status-dot">In progress</span></button>
+            <div class="section-head"><div><div class="eyebrow">Manage your details</div><h2>Account.</h2></div></div>
+            <div class="menu-group"><button class="menu-row"><span data-icon="bag"></span><span>My orders</span><b class="arrow">›</b></button><button class="menu-row"><span data-icon="heart"></span><span>My wishlist</span><b class="arrow">›</b></button></div>
+            <button class="logout">Log out</button>
+          </div>
+          <nav class="bottom-nav" aria-label="Primary navigation"></nav>
+        </section>
+      </section>
+
+      <aside class="notes" aria-label="Design direction notes">
+        <div class="eyebrow">Direction</div>
+        <h3>Quiet, tactile, considered.</h3>
+        <div class="note-line"><strong>Type</strong><span>Cormorant for scent names; Manrope for utility and actions.</span></div>
+        <div class="note-line"><strong>Material</strong><span>Warm paper, tobacco ink, aged gold, and quiet borders.</span></div>
+        <div class="note-line"><strong>Rule</strong><span>One visual moment per screen. Let product information do the selling.</span></div>
+        <div class="palette" aria-label="Color palette"><span class="swatch paper"></span><span class="swatch ink"></span><span class="swatch gold"></span><span class="swatch olive"></span><span class="swatch tobacco"></span></div>
+      </aside>
+    </main>
+
+    <script>
+      const PRODUCTS = [
+        { brand: "Chanel", name: "Chance Eau Tendre", price: 7200, color: "#d2b08a", notes: { top: "Quince · grapefruit", heart: "Jasmine · hyacinth", base: "Musk · iris" } },
+        { brand: "Dior", name: "Bois d'Argent", price: 9800, color: "#9fa38c", notes: { top: "Iris · incense", heart: "Myrrh · rose", base: "Honey · amber" } },
+        { brand: "Tom Ford", name: "Oud Wood", price: 16200, color: "#8d624b", notes: { top: "Rosewood · cardamom", heart: "Oud · sandalwood", base: "Vanilla · amber" } },
+        { brand: "Jo Malone", name: "English Pear", price: 6800, color: "#c6b38c", notes: { top: "King William pear", heart: "Freesia · rose", base: "Patchouli · amber" } },
+        { brand: "Byredo", name: "Bal d'Afrique", price: 11300, color: "#b1a58f", notes: { top: "Neroli · lemon", heart: "African marigold", base: "Cedar · vetiver" } },
+        { brand: "YSL", name: "Libre", price: 7900, color: "#b69258", notes: { top: "Mandarin · lavender", heart: "Orange blossom", base: "Vanilla · musk" } },
+      ];
+
+      const state = { screen: "home", product: 2, size: 50, quantity: 1, favorites: new Set([1]) };
+      const money = (value) => `₱${value.toLocaleString("en-PH")}`;
+      const productPrice = (product, size) => Math.round(product.price * ({ 30: .65, 50: 1, 100: 1.6 }[size]));
+
+      function icon(name) {
+        const paths = {
+          search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+          bag: '<path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 016 0v2"/>',
+          heart: '<path d="M12 20s-7-4.5-7-10a4 4 0 017-2.5A4 4 0 0119 10c0 5.5-7 10-7 10z"/>',
+          back: '<path d="M15 5l-7 7 7 7"/>',
+          share: '<path d="M8 12l8-5M8 12l8 5M8 12a2 2 0 11-4 0 2 2 0 014 0zm12-7a2 2 0 11-4 0 2 2 0 014 0zm0 14a2 2 0 11-4 0 2 2 0 014 0z"/>',
+          sliders: '<path d="M5 8h8M17 8h2M5 16h2M11 16h8"/><circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/>',
+          chev: '<path d="M9 6l6 6-6 6"/>',
+          more: '<circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/>',
+          pin: '<path d="M12 21s6-5.4 6-11a6 6 0 10-12 0c0 5.6 6 11 6 11z"/><circle cx="12" cy="10" r="2"/>',
+          disc: '<circle cx="12" cy="12" r="8"/><path d="M15 9l-2 5-4 1 2-5z"/>',
+          settings: '<path d="M12 8a4 4 0 100 8 4 4 0 000-8zM4 12h2m12 0h2M12 4v2m0 12v2M6.3 6.3l1.4 1.4m8.6 8.6l1.4 1.4m0-11.4l-1.4 1.4m-8.6 8.6l-1.4 1.4"/>',
+          help: '<circle cx="12" cy="12" r="8"/><path d="M9.8 9a2.3 2.3 0 114 1.7c-1.2.8-1.8 1.2-1.8 2.4M12 16.5h.01"/>',
+        };
+        return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.chev}</svg>`;
+      }
+
+      function bottle(color, label = "") {
+        return `<svg viewBox="0 0 120 170" aria-hidden="true"><defs><linearGradient id="bottle-${color.replace(/[^a-z0-9]/gi, '')}" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".38"/><stop offset=".28" stop-color="${color}"/><stop offset="1" stop-color="#554331" stop-opacity=".72"/></linearGradient></defs><rect x="45" y="7" width="30" height="26" rx="3" fill="#26221c"/><rect x="51" y="31" width="18" height="9" fill="#aa8a60"/><rect x="22" y="39" width="76" height="119" rx="9" fill="url(#bottle-${color.replace(/[^a-z0-9]/gi, '')})"/><path d="M31 48v99" stroke="#fff" stroke-opacity=".38" stroke-width="5" stroke-linecap="round"/><rect x="34" y="84" width="52" height="38" rx="2" fill="#fbf7ee" fill-opacity=".75"/><text x="60" y="103" text-anchor="middle" fill="#443d31" font-family="Georgia" font-size="7" letter-spacing="1">${label}</text></svg>`;
+      }
+
+      function renderIcons(root = document) {
+        root.querySelectorAll("[data-icon]").forEach((node) => { node.innerHTML = icon(node.dataset.icon); });
+      }
+
+      function productCard(product, index) {
+        const productIndex = PRODUCTS.indexOf(product);
+        return `<button class="product-card" data-product="${productIndex}" style="--i:${index}"><span class="product-image" style="--tone:${product.color}"><span class="mini-heart ${state.favorites.has(productIndex) ? "active" : ""}" data-fav="${productIndex}" aria-label="Save ${product.name}">${icon("heart")}</span>${bottle(product.color, product.brand.slice(0, 3).toUpperCase())}</span><span class="product-name">${product.name}</span><span class="product-brand">${product.brand}</span><span class="product-price">${money(product.price)}</span></button>`;
+      }
+
+      function renderProducts() {
+        document.querySelectorAll('[data-products="featured"]').forEach((node) => { node.innerHTML = PRODUCTS.slice(0, 4).map(productCard).join(""); });
+        document.querySelectorAll('[data-products="catalog"]').forEach((node) => { node.innerHTML = PRODUCTS.map(productCard).join(""); });
+      }
+
+      function renderCart() {
+        const items = [PRODUCTS[2], PRODUCTS[0]];
+        const node = document.querySelector("[data-cart-items]");
+        node.innerHTML = items.map((product, index) => `<button class="menu-row" data-product="${PRODUCTS.indexOf(product)}"><span class="product-image" style="width:44px;height:52px;flex:0 0 44px">${bottle(product.color, product.brand.slice(0, 3).toUpperCase())}</span><span><strong style="display:block;font:500 1.1rem/1 var(--display)">${product.name}</strong><small style="display:block;margin-top:3px;color:var(--muted);font-size:9px">${product.brand} · ${index === 0 ? "50 ml" : "30 ml"}</small></span><b style="font-size:10px;font-weight:600">${money(productPrice(product, index === 0 ? 50 : 30))}</b></button>`).join("");
+      }
+
+      function renderProduct() {
+        const product = PRODUCTS[state.product];
+        document.querySelector("[data-product-bottle]").innerHTML = bottle(product.color, product.brand.slice(0, 3).toUpperCase());
+        document.querySelector("[data-product-brand]").textContent = product.brand;
+        document.querySelector("[data-product-name]").textContent = product.name;
+        document.querySelector("[data-note='top']").textContent = product.notes.top;
+        document.querySelector("[data-note='heart']").textContent = product.notes.heart;
+        document.querySelector("[data-note='base']").textContent = product.notes.base;
+        document.querySelectorAll("[data-price]").forEach((node) => { node.textContent = money(productPrice(product, Number(node.dataset.price))); });
+        document.querySelector("[data-product-price]").textContent = money(productPrice(product, state.size) * state.quantity);
+        document.querySelector("[data-qty-value]").textContent = state.quantity;
+        document.querySelectorAll("[data-size]").forEach((node) => node.classList.toggle("active", Number(node.dataset.size) === state.size));
+        document.querySelector("#screen-product [data-fav]").classList.toggle("active", state.favorites.has(state.product));
+      }
+
+      function renderNavigation() {
+        const labels = [["home", "Home", "disc"], ["catalog", "Collection", "search"], ["profile", "Account", "more"], ["cart", "Bag", "bag"]];
+        document.querySelectorAll(".bottom-nav").forEach((node) => {
+          node.innerHTML = labels.map(([id, label, iconName]) => `<button class="${state.screen === id ? "active" : ""}" data-nav="${id}">${icon(iconName)}<span>${label}</span></button>`).join("");
+        });
+      }
+
+      function show(screen) {
+        state.screen = screen;
+        document.querySelectorAll(".screen").forEach((node) => node.classList.toggle("active", node.dataset.screen === screen));
+        renderNavigation();
+        renderProduct();
+      }
+
+      document.addEventListener("click", (event) => {
+        const nav = event.target.closest("[data-nav]");
+        if (nav) { show(nav.dataset.nav); return; }
+        const favorite = event.target.closest("[data-fav]");
+        if (favorite) { event.stopPropagation(); const id = favorite.dataset.fav === "product" ? state.product : Number(favorite.dataset.fav); state.favorites.has(id) ? state.favorites.delete(id) : state.favorites.add(id); renderProducts(); renderProduct(); return; }
+        const productNode = event.target.closest("[data-product]");
+        if (productNode) { state.product = Number(productNode.dataset.product); show("product"); return; }
+        const size = event.target.closest("[data-size]");
+        if (size) { state.size = Number(size.dataset.size); renderProduct(); return; }
+        const quantity = event.target.closest("[data-qty]");
+        if (quantity) { state.quantity = Math.max(1, state.quantity + Number(quantity.dataset.qty)); renderProduct(); return; }
+        if (event.target.closest("[data-add]")) { show("cart"); return; }
+      });
+
+      document.querySelectorAll("[data-bottle]").forEach((node) => { node.innerHTML = bottle(node.dataset.bottle, node.dataset.label); });
+      renderIcons();
+      renderProducts();
+      renderCart();
+      renderProduct();
+      renderNavigation();
+      const initialScreen = location.hash.slice(1);
+      if (["home", "catalog", "product", "cart", "checkout", "profile"].includes(initialScreen)) show(initialScreen);
+    </script>
+  </body>
+</html>

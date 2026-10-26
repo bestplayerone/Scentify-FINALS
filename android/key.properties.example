@@ -1,0 +1,6 @@
+# Copy this file to android/key.properties and keep the copy out of source control.
+# The keystore itself must live outside the repository.
+storeFile=/absolute/path/to/scentify-upload-key.jks
+storePassword=replace-me
+keyAlias=scentify
+keyPassword=replace-me

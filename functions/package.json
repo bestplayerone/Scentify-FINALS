@@ -1,0 +1,26 @@
+{
+  "name": "scentify-functions",
+  "description": "Trusted payment and notification handlers for Scentify",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check scripts/provision_admin.js && node --check scripts/import_admin_with_firebase_cli.js",
+    "test:functions": "node --test test/functions_validation.test.cjs",
+    "test:rules": "node --test test/firestore_rules.test.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0"
+  },
+  "overrides": {
+    "body-parser": "2.4.0",
+    "@grpc/grpc-js": "1.14.5"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.0.0"
+  }
+}

@@ -1,0 +1,17 @@
+project_id = "jnukqrpkyqwoatesuelp"
+
+[api]
+enabled = true
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+major_version = 15
+
+[auth]
+enabled = true
+
+[auth.third_party.firebase]
+enabled = true
+project_id = "scentify-b97e5"

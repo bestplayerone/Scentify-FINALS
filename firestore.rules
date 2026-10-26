@@ -1,0 +1,355 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function validId(value) {
+      return value is string && value.size() > 0 && value.size() <= 128 &&
+        value.matches('^[A-Za-z0-9][A-Za-z0-9_-]*$');
+    }
+
+    function validNonNegativeInt(value) {
+      return value is int && value >= 0;
+    }
+
+    function hasNonWhitespace(value) {
+      return value is string &&
+        !value.matches('^[\\s\\p{Z}\\p{C}]*$');
+    }
+
+    function validCheckoutIntent(orderId) {
+      let intentPath = /databases/$(database)/documents/checkoutIntents/$(orderId);
+      let intent = get(intentPath);
+      return validOrderReview(orderId) &&
+        exists(intentPath) &&
+        intent.data.orderId == orderId &&
+        intent.data.userId == request.auth.uid &&
+        intent.data.amountCentavos == request.resource.data.totalCentavos &&
+        intent.data.paymentReference == request.resource.data.paymentReference &&
+        (!request.resource.data.keys().hasAny(['paymentMethod']) ||
+          request.resource.data.paymentMethod ==
+            get(/databases/$(database)/documents/orderReviews/$(orderId)).data.paymentMethod) &&
+        intent.data.status == 'pending' &&
+        intent.data.expiresAt > request.time;
+    }
+
+    function validOrderReview(orderId) {
+      let reviewPath = /databases/$(database)/documents/orderReviews/$(orderId);
+      let review = get(reviewPath);
+      return exists(reviewPath) &&
+        review.data.orderId == orderId &&
+        review.data.userId == request.auth.uid &&
+        review.data.status == 'ready' &&
+        review.data.expiresAt > request.time &&
+        review.data.amountCentavos == request.resource.data.totalCentavos &&
+        review.data.subtotalCentavos == request.resource.data.subtotalCentavos &&
+        review.data.deliveryFeeCentavos == request.resource.data.deliveryFeeCentavos &&
+        review.data.totalCentavos == request.resource.data.totalCentavos &&
+        review.data.orderItems == request.resource.data.items &&
+        review.data.shippingAddress == request.resource.data.shippingAddress &&
+        review.data.deliveryOption == request.resource.data.deliveryOption;
+    }
+
+    function validSandboxOrder(orderId) {
+      let reviewPath = /databases/$(database)/documents/orderReviews/$(orderId);
+      return validOrderReview(orderId) &&
+        request.resource.data.paymentReference.matches('^sandbox-[A-Za-z0-9_-]{1,120}$') &&
+        (!request.resource.data.keys().hasAny(['paymentMethod']) ||
+          request.resource.data.paymentMethod == get(reviewPath).data.paymentMethod) &&
+        !request.resource.data.keys().hasAny(['paymentProvider']);
+    }
+
+    function validOrderShape() {
+      return request.resource.data.keys().hasOnly([
+          'id', 'userId', 'items', 'shippingAddress', 'deliveryOption',
+          'subtotalCentavos', 'deliveryFeeCentavos', 'totalCentavos',
+          'status', 'paymentReference', 'createdAt', 'updatedAt', 'events',
+          'paymentMethod', 'paymentStatus', 'paymentProvider'
+        ]) &&
+        validId(request.resource.data.id) &&
+        request.resource.data.id == request.resource.id &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending_payment' &&
+        request.resource.data.paymentReference is string &&
+        request.resource.data.paymentReference.size() > 0 &&
+        request.resource.data.paymentReference.size() <= 128 &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() > 0 &&
+        request.resource.data.items.size() <= 100 &&
+        validNonNegativeInt(request.resource.data.subtotalCentavos) &&
+        validNonNegativeInt(request.resource.data.deliveryFeeCentavos) &&
+        validNonNegativeInt(request.resource.data.totalCentavos) &&
+        request.resource.data.subtotalCentavos +
+            request.resource.data.deliveryFeeCentavos ==
+        request.resource.data.totalCentavos &&
+        request.resource.data.shippingAddress is map &&
+        request.resource.data.deliveryOption is map &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.events is list &&
+        request.resource.data.events.size() == 0 &&
+        (!request.resource.data.keys().hasAny(['paymentMethod']) ||
+          request.resource.data.paymentMethod in ['gcash', 'maya', 'card']) &&
+        (!request.resource.data.keys().hasAny(['paymentStatus']) ||
+          request.resource.data.paymentStatus == 'pending') &&
+        (!request.resource.data.keys().hasAny(['paymentProvider']) ||
+          request.resource.data.paymentProvider in ['paymongo', 'xendit']);
+    }
+
+    function validCodOrderRequest(orderId) {
+      let address = request.resource.data.shippingAddress;
+      let delivery = request.resource.data.deliveryOption;
+      return request.resource.data.keys().hasOnly([
+          'id', 'userId', 'items', 'shippingAddress', 'deliveryOption',
+          'subtotalCentavos', 'deliveryFeeCentavos', 'totalCentavos',
+          'status', 'paymentReference', 'createdAt', 'updatedAt', 'events',
+          'paymentMethod', 'paymentStatus'
+        ]) &&
+        validId(request.resource.data.id) &&
+        request.resource.data.id == orderId &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending_confirmation' &&
+        request.resource.data.paymentMethod == 'cod' &&
+        request.resource.data.paymentStatus == 'unpaid' &&
+        request.resource.data.paymentReference == null &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() > 0 &&
+        request.resource.data.items.size() <= 100 &&
+        validNonNegativeInt(request.resource.data.subtotalCentavos) &&
+        validNonNegativeInt(request.resource.data.deliveryFeeCentavos) &&
+        validNonNegativeInt(request.resource.data.totalCentavos) &&
+        request.resource.data.subtotalCentavos +
+            request.resource.data.deliveryFeeCentavos ==
+        request.resource.data.totalCentavos &&
+        address is map &&
+        address.keys().hasOnly([
+          'fullName', 'phoneNumber', 'addressLine1', 'barangay', 'city',
+          'province', 'postalCode', 'notes'
+        ]) &&
+        hasNonWhitespace(address.fullName) &&
+        hasNonWhitespace(address.phoneNumber) &&
+        address.phoneNumber.matches('^\\+639[0-9]{9}$') &&
+        hasNonWhitespace(address.addressLine1) &&
+        hasNonWhitespace(address.barangay) &&
+        hasNonWhitespace(address.city) &&
+        hasNonWhitespace(address.province) &&
+        address.postalCode is string &&
+        address.postalCode.matches('^[0-9]{4}$') &&
+        address.notes is string &&
+        delivery is map &&
+        delivery.keys().hasOnly(['id', 'name', 'feeCentavos', 'estimatedDays']) &&
+        delivery.id in ['standard', 'express', 'same-day'] &&
+        delivery.name is string &&
+        validNonNegativeInt(delivery.feeCentavos) &&
+        delivery.estimatedDays is string &&
+        request.resource.data.deliveryFeeCentavos == delivery.feeCentavos &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp &&
+        request.resource.data.events is list &&
+        request.resource.data.events.size() == 0;
+    }
+
+    function validAddressShape() {
+      return request.resource.data.keys().hasOnly([
+          'fullName', 'phoneNumber', 'addressLine1', 'barangay', 'city',
+          'province', 'postalCode', 'label', 'isDefault', 'latitude',
+          'longitude', 'placeId', 'addressSource', 'notes',
+          'createdAt', 'updatedAt'
+        ]) &&
+        request.resource.data.fullName is string &&
+        hasNonWhitespace(request.resource.data.fullName) &&
+        request.resource.data.fullName.size() <= 120 &&
+        request.resource.data.phoneNumber is string &&
+        hasNonWhitespace(request.resource.data.phoneNumber) &&
+        request.resource.data.phoneNumber.matches('^\\+639[0-9]{9}$') &&
+        request.resource.data.addressLine1 is string &&
+        hasNonWhitespace(request.resource.data.addressLine1) &&
+        request.resource.data.addressLine1.size() <= 240 &&
+        request.resource.data.barangay is string &&
+        hasNonWhitespace(request.resource.data.barangay) &&
+        request.resource.data.barangay.size() <= 120 &&
+        request.resource.data.city is string &&
+        hasNonWhitespace(request.resource.data.city) &&
+        request.resource.data.city.size() <= 120 &&
+        request.resource.data.province is string &&
+        hasNonWhitespace(request.resource.data.province) &&
+        request.resource.data.province.size() <= 120 &&
+        request.resource.data.postalCode is string &&
+        request.resource.data.postalCode.matches('^[0-9]{4}$') &&
+        request.resource.data.label is string &&
+        request.resource.data.label in ['Home', 'Work', 'Other'] &&
+        request.resource.data.isDefault is bool &&
+        (!request.resource.data.keys().hasAny(['addressSource']) ||
+          request.resource.data.addressSource == null ||
+          request.resource.data.addressSource in ['manual', 'autocomplete']) &&
+        (!request.resource.data.keys().hasAny(['placeId']) ||
+          request.resource.data.placeId == null ||
+          validId(request.resource.data.placeId)) &&
+        (!request.resource.data.keys().hasAny(['notes']) ||
+          (request.resource.data.notes is string &&
+            request.resource.data.notes.size() <= 500)) &&
+        (
+          !request.resource.data.keys().hasAny(['latitude', 'longitude']) ||
+          (
+            request.resource.data.keys().hasAny(['latitude']) &&
+            request.resource.data.keys().hasAny(['longitude']) &&
+            (
+              (request.resource.data.latitude == null &&
+                request.resource.data.longitude == null) ||
+              (request.resource.data.latitude is number &&
+                request.resource.data.latitude >= -90 &&
+                request.resource.data.latitude <= 90 &&
+                request.resource.data.longitude is number &&
+                request.resource.data.longitude >= -180 &&
+                request.resource.data.longitude <= 180)
+            )
+          )
+        ) &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
+    }
+
+    function isAdmin() {
+      return signedIn() && (
+        request.auth.token.admin == true ||
+        request.auth.token.superadmin == true ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'superadmin'
+      );
+    }
+
+    match /perfumes/{productId} {
+      allow read: if resource.data.isPublished == true || isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() &&
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['variants']);
+    }
+
+    match /inventoryAdjustments/{adjustmentId} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /inventoryReservations/{reservationId} {
+      allow read, write: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn() &&
+        (request.auth.uid == userId || isAdmin());
+      allow create: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly([
+          'email', 'displayName', 'role', 'createdAt', 'updatedAt'
+        ]) &&
+        request.resource.data.role == 'customer' &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() <= 320 &&
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() <= 120 &&
+        request.resource.data.createdAt is timestamp &&
+        request.resource.data.updatedAt is timestamp;
+      allow update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.email == resource.data.email &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'displayName', 'updatedAt'
+        ]) &&
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() <= 120;
+
+      match /notificationTokens/{tokenId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create, update: if signedIn() && request.auth.uid == userId &&
+          tokenId.size() > 0 && tokenId.size() <= 256 &&
+          request.resource.data.keys().hasOnly(['token', 'platform', 'updatedAt']) &&
+          request.resource.data.token is string &&
+          request.resource.data.token.size() > 0 &&
+          request.resource.data.token.size() <= 4096 &&
+          request.resource.data.platform is string &&
+          request.resource.data.platform.size() <= 32 &&
+          request.resource.data.updatedAt is timestamp;
+        allow delete: if signedIn() && request.auth.uid == userId;
+      }
+
+      match /addresses/{addressId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn() && request.auth.uid == userId &&
+          addressId == 'primary' && validAddressShape();
+        allow update: if signedIn() && request.auth.uid == userId &&
+          addressId == 'primary' && validAddressShape() &&
+          request.resource.data.createdAt == resource.data.createdAt;
+        allow delete: if signedIn() && request.auth.uid == userId &&
+          addressId == 'primary';
+      }
+    }
+
+    match /wishlists/{userId} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create, update: if signedIn() && request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(['productIds']) &&
+        request.resource.data.productIds is list &&
+        request.resource.data.productIds.size() <= 100;
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /carts/{userId} {
+      allow read, delete: if signedIn() && request.auth.uid == userId;
+      // Firestore Rules cannot iterate list members; callable cart validation is
+      // authoritative before any cart is used for a server-priced checkout.
+      allow create, update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.keys().hasOnly(['userId', 'items', 'updatedAt']) &&
+        request.resource.data.userId == userId &&
+        request.resource.data.items is list &&
+        request.resource.data.items.size() <= 100 &&
+        request.resource.data.updatedAt is timestamp;
+    }
+
+    // Checkout intents and rate-limit ledgers are trusted backend state.
+    match /checkoutIntents/{intentId} {
+      allow read, write: if false;
+    }
+
+    match /orderReviews/{orderId} {
+      allow read, write: if false;
+    }
+
+    match /paymongoWebhookEvents/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /rateLimits/{limitId} {
+      allow read, write: if false;
+    }
+
+    match /orders/{orderId} {
+      allow read: if signedIn() &&
+        (resource.data.userId == request.auth.uid || isAdmin());
+      // The client may create a provisional order, but it can never mark an
+      // order paid or move it through fulfillment. A trusted payment webhook
+      // performs those updates with the Admin SDK.
+      allow create: if signedIn() &&
+        (validCodOrderRequest(orderId) ||
+          (validOrderShape() &&
+            (validCheckoutIntent(orderId) || validSandboxOrder(orderId))));
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /perfumes/{productId}/ratings/{ratingId} {
+      allow read: if get(/databases/$(database)/documents/perfumes/$(productId)).data.isPublished == true ||
+        (signedIn() && (resource.data.userId == request.auth.uid || isAdmin()));
+      // Ratings are created and aggregated by submitProductRating only.
+      allow write: if false;
+    }
+
+    match /addressSuggestions/{suggestionId} {
+      allow read, write: if false;
+    }
+  }
+}
