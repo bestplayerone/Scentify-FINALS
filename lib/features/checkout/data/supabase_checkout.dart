@@ -29,7 +29,11 @@ class SupabaseXenditPaymentGateway implements PaymentGateway {
       if (!await _openUrl(uri)) throw const PaymentException('GCash checkout could not be opened.');
       return PaymentSession(provider: 'xendit', reference: reference, checkoutUrl: url, orderCreatedOnServer: true);
     } on FunctionException catch (error) {
-      throw PaymentException(error.reason ?? 'GCash checkout is temporarily unavailable.');
+      final details = error.details;
+      final message = details is Map && details['error'] is String
+          ? details['error'] as String
+          : null;
+      throw PaymentException(message ?? error.reasonPhrase ?? 'GCash checkout is temporarily unavailable.');
     } on PaymentException { rethrow; } on Object { throw const PaymentException('GCash checkout is temporarily unavailable. Please try again.'); }
   }
 

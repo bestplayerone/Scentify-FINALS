@@ -126,7 +126,7 @@ begin
   end loop;
   if v_subtotal = 0 then raise exception 'cart is empty' using errcode = '22023'; end if;
 
-  v_order_id := gen_random_uuid()::text;
+  v_order_id := p_idempotency_key;
   insert into public.orders (id, user_id, idempotency_key, shipping_address, delivery_option,
     subtotal_centavos, delivery_fee_centavos, total_centavos, status, payment_method,
     payment_provider, payment_status)

@@ -19,3 +19,13 @@ String firebaseAuthErrorMessage(String code) => switch (code) {
   'account-exists-with-different-credential' => 'This email already uses password login. Sign in with email and password instead.',
   _ => 'Authentication failed. Please try again.',
 };
+
+String supabaseAuthErrorMessage(String code, String message) => switch (
+  code.replaceAll('-', '_')
+) {
+  'invalid_credentials' || 'invalid_login_credentials' =>
+    'Email or password is incorrect.',
+  _ when message.trim().toLowerCase() == 'invalid login credentials' =>
+    'Email or password is incorrect.',
+  _ => message,
+};

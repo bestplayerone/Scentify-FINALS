@@ -30,13 +30,24 @@ class SupabaseAuthRepository {
     try {
       await _auth.signInWithPassword(email: email.trim(), password: password);
     } on AuthException catch (error) {
-      throw SupabaseAuthFailure(error.message);
+      throw SupabaseAuthFailure(
+        supabaseAuthErrorMessage(error.code ?? '', error.message),
+      );
     }
   }
 
-  Future<void> register({required String displayName, required String email, required String password}) async {
+  Future<bool> register({
+    required String displayName,
+    required String email,
+    required String password,
+  }) async {
     try {
-      await _auth.signUp(email: email.trim(), password: password, data: {'display_name': displayName.trim()});
+      final response = await _auth.signUp(
+        email: email.trim(),
+        password: password,
+        data: {'display_name': displayName.trim()},
+      );
+      return response.session != null;
     } on AuthException catch (error) {
       throw SupabaseAuthFailure(error.message);
     }

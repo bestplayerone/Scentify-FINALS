@@ -180,7 +180,7 @@ Future<void> main() async {
             UserProfile(
               id: restoredUser.id,
               email: restoredUser.email ?? '',
-              displayName: restoredUser.displayName ?? '',
+              displayName: restoredUser.userMetadata?['display_name'] as String? ?? '',
               role: restoredRole,
               createdAt: DateTime.tryParse(restoredUser.createdAt) ?? DateTime.now(),
             );
@@ -2007,11 +2007,12 @@ class _ScentifyAppState extends State<ScentifyApp> {
   }) async {
     final repository = SupabaseAuthRepository();
     if (register) {
-      await repository.register(
+      final hasSession = await repository.register(
         displayName: displayName ?? '',
         email: email,
         password: password,
       );
+      if (!hasSession) return;
     } else {
       await repository.signIn(email: email, password: password);
     }
@@ -2044,7 +2045,7 @@ class _ScentifyAppState extends State<ScentifyApp> {
     final profile = await _saveAuthenticatedProfile(
       userId: userId,
       email: repository.currentUser?.email ?? fallbackEmail ?? '',
-      displayName: repository.currentUser?.displayName ?? displayName,
+      displayName: repository.currentUser?.userMetadata?['display_name'] as String? ?? displayName,
       claimRole: await repository.claimRole(forceRefresh: true),
     );
     if (mounted) {
@@ -3490,6 +3491,7 @@ class _AuthPageState extends State<AuthPage> {
   bool _isSubmitting = false;
   bool _isGoogleSubmitting = false;
   String? _errorMessage;
+  String? _successMessage;
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -3543,6 +3545,7 @@ class _AuthPageState extends State<AuthPage> {
     setState(() {
       _isSubmitting = true;
       _errorMessage = null;
+      _successMessage = null;
     });
     try {
       await widget.onSubmit(
@@ -3551,6 +3554,12 @@ class _AuthPageState extends State<AuthPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
+      if (mounted && _register) {
+        setState(
+          () => _successMessage =
+              'Check your email to confirm your account, then sign in.',
+        );
+      }
     } on SupabaseAuthFailure catch (error) {
       if (mounted) {
         setState(() => _errorMessage = error.message);
@@ -3643,6 +3652,7 @@ class _AuthPageState extends State<AuthPage> {
     setState(() {
       _register = !_register;
       _errorMessage = null;
+      _successMessage = null;
     });
   }
 
@@ -3695,6 +3705,14 @@ class _AuthPageState extends State<AuthPage> {
                   _errorMessage!,
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: colors.danger),
+                ),
+              ],
+              if (_successMessage != null) ...[
+                const SizedBox(height: 10),
+                Text(
+                  _successMessage!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: colors.success),
                 ),
               ],
               SizedBox(height: isCompact ? 18 : 28),

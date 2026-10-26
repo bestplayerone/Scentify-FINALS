@@ -39,7 +39,13 @@ Deno.serve(async (request) => {
       }),
     });
     const payload = await response.json();
-    if (!response.ok || typeof payload.payment_session_id !== 'string' || typeof payload.payment_link_url !== 'string') throw new Error('Xendit could not start checkout.');
+    if (!response.ok || typeof payload.payment_session_id !== 'string' || typeof payload.payment_link_url !== 'string') {
+      console.error('Xendit session creation failed', response.status, payload?.error_code, payload?.message);
+      const error = new Error(typeof payload?.message === 'string' ? payload.message : 'Xendit could not start checkout.');
+      (error as Error & { status?: number; code?: string }).status = response.status;
+      (error as Error & { status?: number; code?: string }).code = payload?.error_code;
+      throw error;
+    }
     const { error: recordError } = await client.rpc('record_xendit_session', {
       p_order_id: orderId, p_session_id: payload.payment_session_id, p_checkout_url: payload.payment_link_url,
       p_expires_at: payload.expires_at, p_amount_centavos: order.total_centavos,
@@ -51,6 +57,8 @@ Deno.serve(async (request) => {
       await client?.rpc('release_checkout_reservation', { p_order_id: orderId }).catch(() => undefined);
     }
     console.error('create-xendit-session failed', error);
-    return Response.json({ error: error instanceof Error ? error.message : 'Payment is temporarily unavailable.' }, { status: 500 });
+    const details = error as Error & { status?: number; code?: string };
+    const status = details.status && details.status >= 400 && details.status < 500 ? details.status : 500;
+    return Response.json({ error: error instanceof Error ? error.message : 'Payment is temporarily unavailable.', code: details.code }, { status });
   }
 });

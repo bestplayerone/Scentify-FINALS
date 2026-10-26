@@ -1,66 +1,71 @@
 # Scentify
 
-Supabase is the active customer runtime. Flutter uses Supabase Auth/Postgres and Edge Functions; service-role, Xendit, and webhook secrets remain backend-only.
+Scentify is a Flutter shopping app for browsing and ordering fragrances. Customers can browse products, search and filter the catalog, save favorites, manage a cart, create an account, and place orders. The app also includes admin screens for order management.
 
-## Feature status
+## How the app works
 
-### Customer app
+- Flutter renders the Android app and manages navigation, forms, cart state, and checkout screens.
+- Supabase Auth handles customer email/password and Google sign-in. New email accounts must confirm their email before signing in.
+- Supabase Postgres stores the catalog, customer profiles, carts, wishlists, and orders. Row Level Security and database functions protect customer data and trusted checkout operations.
+- Supabase Edge Functions connect trusted server-side operations to Xendit. Payment credentials and webhook secrets belong in backend secrets, never in the app.
+- Firebase packages remain in the project for legacy and platform integrations. Some admin, review, address, and notification features still use Firebase services and need their corresponding configuration and deployed backend resources.
 
-- Catalog browsing, search/filtering, product details, favorites, and cart flows are connected to the app repositories. Firebase-backed catalog/cart behavior requires the configured Firebase project and deployed Functions/rules.
-- Checkout obtains a server-reviewed quote before creating a Firestore order. The default payment gateway is the sandbox; PayMongo Hosted Checkout is selected only for Firestore-backed orders when `SCENTIFY_PAYMONGO_ENABLED=true`.
-- Signed-in customers can save one primary delivery address at `users/{uid}/addresses/primary`. Checkout uses Firestore storage; demo/test sessions use in-memory storage. Manual address entry remains available.
-- Address suggestions and place details call App Check-protected Functions and read the private `addressSuggestions` collection. **This is not a live geocoder:** suggestions remain empty until trusted address data is loaded. The repository currently has no importer or seed dataset. Each document needs a lowercase `searchKey`, `primaryText`, `secondaryText`, `addressLine1`, `barangay`, `city`, `province`, four-digit `postalCode`, `latitude`, and `longitude`; the document ID is the `placeId`. Firestore rules deny client reads and writes to this collection.
-- Product reviews are submitted through the trusted `submitProductRating` Function. The server checks that the signed-in user owns a delivered order containing the rated variant, prevents duplicate ratings, and updates the product aggregate. Product pages display verified reviews; customers can submit one from a delivered purchase.
-- Order push notifications use FCM on supported devices. Delivery depends on notification permission, valid device tokens, and the deployed order-status trigger. The admin Notifications module is informational; it does not compose or manually send campaigns.
+## Tech stack
 
-### Admin app
+| Area | Technology |
+| --- | --- |
+| Mobile app | Flutter, Dart, Material |
+| Authentication and primary backend | Supabase Auth, Postgres, Row Level Security, RPC, Edge Functions |
+| Online payments | Xendit hosted checkout and webhooks |
+| Legacy/platform integrations | Firebase Auth, Cloud Firestore, Cloud Functions, App Check, Firebase Cloud Messaging |
+| Local preferences | `shared_preferences` |
+| Tests | Flutter widget tests and Dart tests |
 
-- Order/payment approval and fulfillment status transitions are the active management workflow and remain protected by server-side role checks.
-- Products and inventory are read-only previews. Product editing/publishing and inventory adjustments are not exposed in the admin UI.
-- Customers is an order-account count, not a customer directory. Search, export, and profile-management tools are unavailable.
-- Settings shows the current account, payment mode, and loaded product count; it cannot change store configuration.
-- Superadmin access shows the account role only. Admin staff management is unavailable.
+## Install and run
 
-## Supabase and Xendit setup
+### Requirements
 
-The active project is `jnukqrpkyqwoatesuelp`. Deploy Supabase migrations and Edge Functions with `./scripts/deploy_supabase.sh`. Register `https://jnukqrpkyqwoatesuelp.supabase.co/functions/v1/xendit-webhook` in Xendit Test Mode for `payment_session.completed` and `payment_session.expired`. Keep provider and service-role secrets in Edge Function secrets only.
+- Flutter SDK compatible with the Dart SDK constraint in `pubspec.yaml`
+- Android Studio/Android SDK for an Android build, or Chrome for a web run
+- Network access to the configured Supabase project
 
-Before testing against a Firebase project:
+### Setup
 
-1. Confirm `lib/firebase_options.dart` and the native Firebase configuration belong to the intended project.
-2. Configure the appropriate App Check providers for the target platforms. The callable Functions used by checkout, ratings, and address suggestions enforce App Check.
-3. Deploy the current Firestore rules and Functions:
+```bash
+git clone <repository-url>
+cd scentify
+flutter pub get
+```
 
-   ```bash
-   firebase deploy --only firestore:rules,functions
-   ```
+The app has a default Supabase project URL and publishable key in `lib/core/supabase/supabase_bootstrap.dart`. To use another project, pass its public client values at build/run time:
 
-   Cloud Functions deployment requires the Firebase project to be on the Blaze (pay-as-you-go) plan. Firestore rules can be deployed separately.
+```bash
+flutter run \
+  --dart-define=SCENTIFY_SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SCENTIFY_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+```
 
-4. Load trusted address suggestion documents into `addressSuggestions` if autocomplete is needed. Without that dataset, use manual address entry.
-5. For PayMongo test checkout, configure the backend environment from `functions/.env.example`, deploy Functions, and register the deployed webhook for `checkout_session.payment.paid`. Never put provider secrets in Flutter code or public configuration.
-6. For Xendit test checkout, provision `XENDIT_SECRET_KEY` and `XENDIT_WEBHOOK_TOKEN` in Firebase Secret Manager, deploy the `asia-southeast1` Functions to **`scentify-b97e5`**, register the deployed `xenditWebhook` URL for `payment_session.completed` and `payment_session.expired`, and build with `--dart-define=SCENTIFY_XENDIT_ENABLED=true`:
-   ```bash
-   npx firebase-tools deploy --only functions --project scentify-b97e5
-   # callable: https://asia-southeast1-scentify-b97e5.cloudfunctions.net/createXenditCheckoutSession
-   # webhook:  https://asia-southeast1-scentify-b97e5.cloudfunctions.net/xenditWebhook
-   ```
-   The active checkout/order backend is Firebase/Firestore; Supabase is currently only the staged catalog/schema migration and does not contain the payment function.
-7. For push notifications, configure FCM for the target platform and grant notification permission on the device.
+Run on a connected Android device/emulator with `flutter run`, or on Chrome with `flutter run -d chrome`.
 
-Google sign-in also requires the Firebase Auth Google provider and platform OAuth configuration. The app's Firebase flows are intended for Android and Chrome; iOS and Linux have not been verified.
+Build an Android APK:
 
-## Verification
+```bash
+flutter build apk --debug
+```
 
-From the project root:
+The APK is written to `build/app/outputs/flutter-apk/app-debug.apk`. A release APK requires the project's Android signing configuration.
+
+## Backend setup
+
+For a new or updated Supabase environment, configure email/password and any desired OAuth providers, apply the migrations, and deploy the Edge Functions. See [supabase/README.md](supabase/README.md) and `scripts/deploy_supabase.sh` for backend details. Xendit checkout also requires its server-side secrets and webhook configuration.
+
+Firebase-backed legacy features need the appropriate Firebase project configuration, App Check setup, rules, functions, and notification settings. Those services are not configured by the Supabase setup alone.
+
+## Checks
 
 ```bash
 flutter analyze
 flutter test
-firebase emulators:exec --only firestore --project demo-scentify-rules "npm --prefix functions run test:rules"
-(cd functions && npm run check)
 ```
 
-The automated Flutter tests exercise in-memory repositories and widget flows. They do not prove that live Firebase rules, deployed Functions, address data, App Check, FCM delivery, or PayMongo credentials/webhooks are configured correctly. No live payment or production deployment is performed by these checks.
-
-# Scentify-FINALS
+These checks validate source and automated test behavior. They do not verify live authentication, email delivery, deployed backend configuration, payment processing, or device behavior.

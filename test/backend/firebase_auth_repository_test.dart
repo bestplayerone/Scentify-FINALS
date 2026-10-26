@@ -27,5 +27,13 @@ void main() {
       firebaseAuthErrorMessage('account-exists-with-different-credential'),
       'This email already uses password login. Sign in with email and password instead.',
     );
+    expect(
+      supabaseAuthErrorMessage('invalid_credentials', 'Invalid login credentials'),
+      'Email or password is incorrect.',
+    );
+    expect(
+      supabaseAuthErrorMessage('', 'Invalid login credentials'),
+      'Email or password is incorrect.',
+    );
   });
 }

@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 import { bearer, json } from '../_shared/http.ts';
-import { createXenditSession } from '../_shared/xendit.ts';
+import { createXenditSession, XenditRequestError } from '../_shared/xendit.ts';
 
 const url = Deno.env.get('SUPABASE_URL')!;
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -47,6 +47,9 @@ Deno.serve(async (request) => {
       await userClient?.rpc('release_checkout_reservation', { p_order_id: orderId });
     }
     console.error('create-xendit-session failed', error);
+    if (error instanceof XenditRequestError) {
+      return json({ error: error.message, code: error.code }, error.status >= 400 && error.status < 500 ? error.status : 502);
+    }
     return json({ error: error instanceof Error ? error.message : 'Payment is temporarily unavailable.' }, 500);
   }
 });

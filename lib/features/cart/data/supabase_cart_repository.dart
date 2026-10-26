@@ -12,13 +12,17 @@ class SupabaseCartRepository implements CartRepository {
     final rows = await _client.from('cart_items').select('quantity, variant_id').eq('user_id', userId);
     if (rows.isEmpty) return Cart(userId: userId, items: const [], updatedAt: DateTime.now());
     final ids = rows.map((row) => row['variant_id'] as String).toList();
-    final variants = await _client.from('product_variants').select('id,label,price_centavos,product_id,products(id,name)').inFilter('id', ids);
+    final variants = await _client.from('catalog_variants').select('id,label,price_centavos,product_id').inFilter('id', ids);
+    if (variants.isEmpty) return Cart(userId: userId, items: const [], updatedAt: DateTime.now());
+    final productIds = variants.map((row) => row['product_id'] as String).toSet().toList();
+    final products = await _client.from('products').select('id,name').inFilter('id', productIds);
     final byId = {for (final row in variants) row['id'] as String: row};
+    final productsById = {for (final row in products) row['id'] as String: row};
     final items = <CartItem>[];
     for (final row in rows) {
       final variant = byId[row['variant_id']];
-      final product = variant?['products'];
-      if (variant == null || product is! Map) continue;
+      final product = variant == null ? null : productsById[variant['product_id']];
+      if (variant == null || product == null) continue;
       items.add(CartItem(productId: product['id'] as String, variantId: variant['id'] as String, productName: product['name'] as String, variantLabel: variant['label'] as String, unitPrice: Money((variant['price_centavos'] as num).toInt()), quantity: (row['quantity'] as num).toInt()));
     }
     return Cart(userId: userId, items: items, updatedAt: DateTime.now());
