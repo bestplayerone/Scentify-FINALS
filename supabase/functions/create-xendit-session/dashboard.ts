@@ -3,6 +3,16 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.46.1';
 const url = Deno.env.get('SUPABASE_URL')!;
 const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
 
+function checkoutError(code: string | undefined) {
+  return code === '23514'
+    ? 'Some items are no longer available in the requested quantity.'
+    : code === '22023'
+      ? 'Review the delivery details and try again.'
+      : code === '42501'
+        ? 'Your session expired. Sign in again before placing the order.'
+        : 'We could not create the payment order.';
+}
+
 Deno.serve(async (request) => {
   if (request.method !== 'POST') return Response.json({ error: 'Method not allowed.' }, { status: 405 });
   let orderId: string | null = null;
@@ -22,7 +32,10 @@ Deno.serve(async (request) => {
       p_delivery_option: data.deliveryOption,
       p_payment_method: 'gcash',
     });
-    if (orderError) return Response.json({ error: orderError.message }, { status: 400 });
+    if (orderError) {
+      console.error('create_online_payment_order failed', orderError.code, orderError.message);
+      return Response.json({ error: checkoutError(orderError.code), code: orderError.code }, { status: 400 });
+    }
     orderId = order.order_id;
     const secret = Deno.env.get('XENDIT_SECRET_KEY');
     if (!secret) throw new Error('Xendit is not configured.');

@@ -133,6 +133,9 @@ begin
   values (v_order_id, v_uid, p_idempotency_key, p_shipping_address, p_delivery_option,
     v_subtotal, v_fee, v_subtotal + v_fee, 'pending_payment', p_payment_method, 'xendit', 'pending');
 
+  insert into public.inventory_reservations(order_id, expires_at)
+    values (v_order_id, v_expires);
+
   for v_item in
     select ci.variant_id, ci.quantity, pv.product_id, pv.label, pv.price_centavos, p.name
     from public.cart_items ci
@@ -151,8 +154,6 @@ begin
     insert into public.inventory_reservation_items(order_id, variant_id, quantity)
       values (v_order_id, v_item.variant_id, v_item.quantity);
   end loop;
-  insert into public.inventory_reservations(order_id, expires_at)
-    values (v_order_id, v_expires);
   delete from public.cart_items where user_id = v_uid;
   return jsonb_build_object('order_id', v_order_id, 'total_centavos', v_subtotal + v_fee,
     'currency', 'PHP', 'status', 'pending_payment', 'expires_at', v_expires);
@@ -163,7 +164,7 @@ create or replace function public.create_cod_order(
 ) returns text language plpgsql security definer set search_path = '' as $$
 declare
   v_uid text := public.request_uid();
-  v_order_id text := gen_random_uuid()::text;
+  v_order_id text := p_idempotency_key;
   v_existing_order_id text;
   v_subtotal bigint := 0;
   v_fee bigint;
@@ -236,9 +237,23 @@ begin
     or p_currency <> 'PHP' or v_order.payment_provider <> 'xendit' then
     raise exception 'payment amount or provider mismatch' using errcode = '22023';
   end if;
-  insert into public.payment_webhook_events(provider, event_id, order_id, event_type)
-    values ('xendit', p_event_id, v_order.id, 'payment_session.completed');
   if v_order.payment_status = 'paid' then return true; end if;
+  if v_order.status <> 'pending_payment' or not exists (
+    select 1 from public.inventory_reservations
+    where order_id = v_order.id and status = 'reserved'
+  ) then
+    raise exception 'payment order is no longer awaiting settlement' using errcode = 'P0001';
+  end if;
+  if exists (
+    select 1 from public.inventory_reservation_items ri
+    join public.product_variants pv on pv.id = ri.variant_id
+    where ri.order_id = v_order.id
+      and (pv.reserved < ri.quantity or pv.on_hand < ri.quantity)
+  ) then
+    raise exception 'reserved inventory is no longer available' using errcode = '23514';
+  end if;
+  insert into public.payment_webhook_events(id, provider, event_id, order_id, event_type)
+    values (p_event_id, 'xendit', p_event_id, v_order.id, 'payment_session.completed');
   update public.orders set status = 'confirmed', payment_status = 'paid', payment_reference = p_session_id
     where id = v_order.id;
   update public.payment_sessions set status = 'completed', updated_at = now() where order_id = v_order.id;
@@ -260,13 +275,22 @@ begin
   if exists (select 1 from public.payment_webhook_events where provider = 'xendit' and event_id = p_event_id) then return true; end if;
   select order_id into v_order_id from public.payment_sessions where provider_session_id = p_session_id for update;
   if v_order_id is null then return false; end if;
-  insert into public.payment_webhook_events(provider, event_id, order_id, event_type)
-    values ('xendit', p_event_id, v_order_id, 'payment_session.expired');
+  insert into public.payment_webhook_events(id, provider, event_id, order_id, event_type)
+    values (p_event_id, 'xendit', p_event_id, v_order_id, 'payment_session.expired');
+  if not exists (
+    select 1 from public.inventory_reservations
+    where order_id = v_order_id and status = 'reserved'
+  ) then
+    update public.payment_sessions set status = case when p_status = 'CANCELED' then 'cancelled' else lower(p_status) end, updated_at = now()
+      where order_id = v_order_id;
+    return true;
+  end if;
   update public.orders set status = 'cancelled', payment_status = 'expired' where id = v_order_id and status = 'pending_payment';
   update public.product_variants pv set reserved = pv.reserved - ri.quantity
     from public.inventory_reservation_items ri where ri.order_id = v_order_id and ri.variant_id = pv.id;
-  update public.inventory_reservations set status = 'released', updated_at = now() where order_id = v_order_id;
-  update public.payment_sessions set status = lower(p_status), updated_at = now() where order_id = v_order_id;
+  update public.inventory_reservations set status = 'released', updated_at = now()
+    where order_id = v_order_id and status = 'reserved';
+  update public.payment_sessions set status = case when p_status = 'CANCELED' then 'cancelled' else lower(p_status) end, updated_at = now() where order_id = v_order_id;
   return true;
 end $$;
 
@@ -306,14 +330,17 @@ end $$;
 
 create or replace function public.release_checkout_reservation(p_order_id text)
 returns boolean language plpgsql security definer set search_path = '' as $$
+declare v_released integer;
 begin
   if not exists (select 1 from public.orders where id = p_order_id and user_id = public.request_uid()
     and status = 'pending_payment') then return false; end if;
+  update public.inventory_reservations set status = 'released', updated_at = now()
+    where order_id = p_order_id and status = 'reserved';
+  get diagnostics v_released = row_count;
+  if v_released = 0 then return true; end if;
   update public.product_variants pv set reserved = pv.reserved - ri.quantity
     from public.inventory_reservation_items ri
     where ri.order_id = p_order_id and ri.variant_id = pv.id;
-  update public.inventory_reservations set status = 'released', updated_at = now()
-    where order_id = p_order_id and status = 'reserved';
   update public.orders set status = 'cancelled', payment_status = 'failed' where id = p_order_id;
   return true;
 end $$;
