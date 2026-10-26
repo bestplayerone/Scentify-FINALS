@@ -47,7 +47,7 @@ Deno.serve(async (request) => {
         currency: 'PHP', country: 'PH', locale: 'en', allow_save_payment_method: 'DISABLED',
         allowed_payment_channels: ['GCASH'], description: `Scentify order ${orderId}`,
         success_return_url: `${Deno.env.get('XENDIT_SUCCESS_URL') ?? 'https://scentify.app/payment/success'}?orderId=${encodeURIComponent(orderId)}`,
-        cancel_return_url: `${Deno.env.get('XENDIT_CANCEL_URL') ?? 'https://scentify.app/payment/cancel'}?orderId=${encodeURIComponent(orderId)}`,
+        cancel_return_url: `${Deno.env.get('XENDIT_CANCEL_URL') ?? `${url}/functions/v1/xendit-cancel`}?orderId=${encodeURIComponent(orderId)}`,
         metadata: { scentifyOrderId: orderId },
       }),
     });
